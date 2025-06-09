@@ -2,42 +2,72 @@ using UnityEngine;
 using UnityEngine.UI;
 using WebSocketSharp;
 
-public class WebSocketClient : MonoBehaviour
+public class WebSocketManager : MonoBehaviour
 {
-    [Tooltip("WebSocket server address (e.g. ws://localhost:12345)")]
-    public string websocketUrl = "ws://localhost:12345";
-
-    [Tooltip("UI Text component to display incoming messages")]
-    public Text outputText;
-
-    private WebSocket ws;
-    private string latestMessage;
-
-    void Start()
+    public enum ConnectionState
     {
-        ws = new WebSocket(websocketUrl);
-        ws.OnMessage += OnMessageReceived;
+        Disconnected,
+        Connecting,
+        Connected
+    }
+
+    [SerializeField]
+    private Text statusText;
+
+    [SerializeField]
+    private Image statusImage;
+
+    public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
+
+    public string url = "ws://localhost:8080";
+    private WebSocket ws;
+
+    private void Start()
+    {
+        Connect();
+    }
+
+    public void Connect()
+    {
+        if (ws != null)
+        {
+            ws.Close();
+            ws = null;
+        }
+
+        UpdateState(ConnectionState.Connecting);
+        ws = new WebSocket(url);
+        ws.OnOpen += (s, e) => UpdateState(ConnectionState.Connected);
+        ws.OnClose += (s, e) => UpdateState(ConnectionState.Disconnected);
+        ws.OnError += (s, e) => UpdateState(ConnectionState.Disconnected);
         ws.ConnectAsync();
     }
 
-    void OnMessageReceived(object sender, MessageEventArgs e)
+    private void UpdateState(ConnectionState newState)
     {
-        latestMessage = e.Data;
-    }
-
-    void Update()
-    {
-        if (!string.IsNullOrEmpty(latestMessage))
+        State = newState;
+        if (statusText != null)
         {
-            if (outputText != null)
+            statusText.text = State.ToString();
+        }
+        if (statusImage != null)
+        {
+            switch (State)
             {
-                outputText.text = latestMessage;
+                case ConnectionState.Connected:
+                    statusImage.color = Color.green;
+                    break;
+                case ConnectionState.Connecting:
+                    statusImage.color = Color.yellow;
+                    break;
+                default:
+                    statusImage.color = Color.red;
+                    break;
             }
-            latestMessage = null;
         }
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         if (ws != null)
         {
