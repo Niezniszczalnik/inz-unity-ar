@@ -16,15 +16,19 @@ public class SensorData
     public string timestamp;
     public float hr;
     public float spo2;
-    public float? object_temp;     // temperatury mogą być „null”, dlatego używamy typu „float?”
-    public float? ambient_temp;
+    // Używamy zwykłych typów zmiennoprzecinkowych, ponieważ Unity
+    // JsonUtility nie obsługuje pól typu Nullable.
+    // Brakujące wartości w danych JSON będą po prostu przyjmowały
+    // domyślną wartość 0.
+    public float object_temp;
+    public float ambient_temp;
     public Vector3Data accel;
     public Vector3Data gyro;
-    public float? lux;
-    public float? temperature;
-    public float? pressure;
-    public float? humidity;
-    public float? gas_resistance;
+    public float lux;
+    public float temperature;
+    public float pressure;
+    public float humidity;
+    public float gas_resistance;
 }
 
 public class DataReceiver : MonoBehaviour
@@ -36,7 +40,7 @@ public class DataReceiver : MonoBehaviour
 
     private void Start()
     {
-        ws = new WebSocket("ws://<adres_IP_RaspberryPi>:<port>");
+        ws = new WebSocket("ws://192.168.100.234:8765");
         ws.OnMessage += (sender, e) => latestJson = e.Data;
         ws.Connect();
     }
