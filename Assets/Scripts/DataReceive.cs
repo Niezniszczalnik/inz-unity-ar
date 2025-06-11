@@ -49,24 +49,31 @@ public class DataReceiver : MonoBehaviour
     {
         if (string.IsNullOrEmpty(latestJson))
             return;
-
+            
         // deserializacja JSON-a na obiekt SensorData
         SensorData data = JsonUtility.FromJson<SensorData>(latestJson);
 
+        // sformatuj czas jeśli to możliwe
+        string formattedTimestamp = data.timestamp;
+        if (System.DateTime.TryParse(data.timestamp, out var parsedTime))
+        {
+            formattedTimestamp = parsedTime.ToString("HH:mm:ss dd MMM yyyy");
+        }
+
         // przygotowanie czytelnego tekstu
         hudText.text =
-            $"Time: {data.timestamp}\n" +
+            $"Time: {formattedTimestamp}\n" +
             $"HR: {data.hr} bpm\n" +
             $"SpO2: {data.spo2}%\n" +
             $"ObjT: {data.object_temp:F1} °C\n" +
             $"AmbT: {data.ambient_temp:F1} °C\n" +
             $"Accel: {data.accel.x:F2}, {data.accel.y:F2}, {data.accel.z:F2}\n" +
             $"Gyro: {data.gyro.x:F2}, {data.gyro.y:F2}, {data.gyro.z:F2}\n" +
-            $"Lux: {data.lux}\n" +
+            $"Lux: {data.lux:F2}\n" +
             $"Env.T: {data.temperature:F1} °C\n" +
             $"Press: {data.pressure:F1} hPa\n" +
             $"Hum: {data.humidity:F1}%\n" +
-            $"Gas: {data.gas_resistance} Ω";
+            $"Gas: {data.gas_resistance:F2} Ω";
 
         latestJson = null;
     }
