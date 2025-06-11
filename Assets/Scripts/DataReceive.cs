@@ -63,7 +63,6 @@ public class DataReceiver : MonoBehaviour
         // przygotowanie czytelnego tekstu
         hudText.text =
             $"Time: {formattedTimestamp}\n" +
-            $"HR: {data.hr} bpm\n" +
             $"SpO2: {data.spo2}%\n" +
             $"ObjT: {data.object_temp:F1} °C\n" +
             $"AmbT: {data.ambient_temp:F1} °C\n" +
