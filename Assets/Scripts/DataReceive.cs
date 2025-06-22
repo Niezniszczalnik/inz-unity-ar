@@ -36,6 +36,7 @@ public class DataReceiver : MonoBehaviour
     private WebSocket ws;
     public Text hudText;
 
+    // Configuration for automatic server discovery
     private const int Port = 8765;
     private const float RetryDelay = 5f; // seconds between discovery attempts
     private const int ProbeTimeout = 200; // ms for a single IP probe
@@ -100,8 +101,17 @@ public class DataReceiver : MonoBehaviour
                     {
                         ws = new WebSocket($"ws://{ip}:{Port}");
                         ws.OnMessage += (sender, e) => latestJson = e.Data;
-                        ws.ConnectAsync();
-                        break;
+                        try
+                        {
+                            ws.Connect();
+                        }
+                        catch
+                        {
+                            ws = null;
+                        }
+
+                        if (ws != null && ws.ReadyState == WebSocketState.Open)
+                            break;
                     }
 
                     if (i % 10 == 0)
@@ -110,7 +120,14 @@ public class DataReceiver : MonoBehaviour
             }
 
             if (ws == null || ws.ReadyState != WebSocketState.Open)
+            {
+                if (ws != null)
+                {
+                    ws.Close();
+                    ws = null;
+                }
                 yield return new WaitForSeconds(RetryDelay);
+            }
         }
     }
 
