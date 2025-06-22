@@ -1,3 +1,16 @@
+using UnityEngine;
+using UnityEngine.UI;
+using WebSocketSharp;
+
+[System.Serializable]
+public class Vector3Data
+{
+    public float x;
+    public float y;
+    public float z;
+}
+
+[System.Serializable]
 public class SensorData
 {
     public string timestamp;
@@ -22,6 +35,7 @@ public class DataReceiver : MonoBehaviour
 {
     private WebSocket ws;
     public Text hudText;
+
 
     private const int Port = 8765;
     private const float RetryDelay = 5f; // seconds between discovery attempts
