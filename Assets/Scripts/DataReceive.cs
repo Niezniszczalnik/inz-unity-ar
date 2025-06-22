@@ -11,6 +11,7 @@ public class Vector3Data
 }
 
 [System.Serializable]
+
 public class SensorData
 {
     public string timestamp;
@@ -36,48 +37,13 @@ public class DataReceiver : MonoBehaviour
     private WebSocket ws;
     public Text hudText;
 
-
-    private const int Port = 8765;
-    private const float RetryDelay = 5f; // seconds between discovery attempts
-    private const int ProbeTimeout = 200; // ms for a single IP probe
-
     private string latestJson;
-
-    private string GetConfiguredHost()
-    {
-        string host = System.Environment.GetEnvironmentVariable("WEBSOCKET_HOST");
-        if (string.IsNullOrEmpty(host) && PlayerPrefs.HasKey("WebSocketHost"))
-            host = PlayerPrefs.GetString("WebSocketHost");
-
-        return host;
-    }
-
-    private void ConnectTo(string url)
-    {
-        ws = new WebSocket(url);
-        ws.OnMessage += (sender, e) => latestJson = e.Data;
-        try
-        {
-            ws.Connect();
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogWarning($"Failed to connect to {url}: {ex.Message}");
-            ws = null;
-        }
-    }
 
     private void Start()
     {
-        string host = GetConfiguredHost();
-        if (!string.IsNullOrEmpty(host))
-        {
-            ConnectTo($"ws://{host}:{Port}");
-        }
-        else
-        {
-            StartCoroutine(DiscoverAndConnect());
-        }
+        ws = new WebSocket("ws://192.168.40.136:8765");
+        ws.OnMessage += (sender, e) => latestJson = e.Data;
+        ws.Connect();
     }
 
     private void Update()
@@ -102,7 +68,7 @@ public class DataReceiver : MonoBehaviour
             $"Saturacja: {data.spo2} SpO₂%\n" +
             $"Temp. ciała: {data.object_temp:F1} °C\n" +
             $"Temp. otoczenia: {data.ambient_temp:F1} °C\n" +
-            $"Akcelerometr:\n" + 
+            $"Akcelerometr:\n" +
             $" x: {data.accel.x:F2} m/s², y: {data.accel.y:F2} m/s², z: {data.accel.z:F2} m/s²\n" +
             $"Żyroskop: x: {data.gyro.x:F2} °/s, y: {data.gyro.y:F2} °/s, z: {data.gyro.z:F2} °/s\n" +
             $"Natężenie światła: {data.lux:F2} lux\n" +
@@ -118,78 +84,3 @@ public class DataReceiver : MonoBehaviour
         if (ws != null)
             ws.Close();
     }
-
-    private System.Collections.IEnumerator DiscoverAndConnect()
-    {
-        while (ws == null || ws.ReadyState != WebSocketState.Open)
-        {
-            string prefix = GetSubnetPrefix();
-            if (!string.IsNullOrEmpty(prefix))
-            {
-                for (int i = 1; i < 255 && (ws == null || ws.ReadyState != WebSocketState.Open); i++)
-                {
-                    string ip = prefix + i;
-                    if (IsPortOpen(ip, Port, ProbeTimeout))
-                    {
-                        ConnectTo($"ws://{ip}:{Port}");
-                        if (ws != null && ws.ReadyState == WebSocketState.Open)
-                            break;
-                    }
-
-                    if (i % 10 == 0)
-                        yield return null;
-                }
-            }
-
-            if (ws == null || ws.ReadyState != WebSocketState.Open)
-            {
-                if (ws != null)
-                {
-                    ws.Close();
-                    ws = null;
-                }
-                yield return new WaitForSeconds(RetryDelay);
-            }
-        }
-    }
-
-    private string GetSubnetPrefix()
-    {
-        foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
-        {
-            if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up)
-                continue;
-
-            var props = ni.GetIPProperties();
-            foreach (var addr in props.UnicastAddresses)
-            {
-                if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
-                    !System.Net.IPAddress.IsLoopback(addr.Address))
-                {
-                    var bytes = addr.Address.GetAddressBytes();
-                    return $"{bytes[0]}.{bytes[1]}.{bytes[2]}.";
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private bool IsPortOpen(string host, int port, int timeoutMs)
-    {
-        try
-        {
-            using (var client = new System.Net.Sockets.TcpClient())
-            {
-                var result = client.BeginConnect(host, port, null, null);
-                bool success = result.AsyncWaitHandle.WaitOne(timeoutMs);
-                client.Close();
-                return success;
-            }
-        }
-        catch
-        {
-            return false;
-        }
-    }
-}
