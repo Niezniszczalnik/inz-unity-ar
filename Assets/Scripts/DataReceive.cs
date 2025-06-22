@@ -49,7 +49,7 @@ public class DataReceiver : MonoBehaviour
     {
         if (string.IsNullOrEmpty(latestJson))
             return;
-            
+
         // deserializacja JSON-a na obiekt SensorData
         SensorData data = JsonUtility.FromJson<SensorData>(latestJson);
 
@@ -57,22 +57,23 @@ public class DataReceiver : MonoBehaviour
         string formattedTimestamp = data.timestamp;
         if (System.DateTime.TryParse(data.timestamp, out var parsedTime))
         {
-            formattedTimestamp = parsedTime.ToString("HH:mm:ss dd MMM yyyy");
+            formattedTimestamp = parsedTime.ToString("HH:mm:ss dd.MMM.yyyy");
         }
 
         // przygotowanie czytelnego tekstu
         hudText.text =
-            $"Time: {formattedTimestamp}\n" +
-            $"SpO2: {data.spo2}%\n" +
-            $"ObjT: {data.object_temp:F1} °C\n" +
-            $"AmbT: {data.ambient_temp:F1} °C\n" +
-            $"Accel: {data.accel.x:F2}, {data.accel.y:F2}, {data.accel.z:F2}\n" +
-            $"Gyro: {data.gyro.x:F2}, {data.gyro.y:F2}, {data.gyro.z:F2}\n" +
-            $"Lux: {data.lux:F2}\n" +
-            $"Env.T: {data.temperature:F1} °C\n" +
-            $"Press: {data.pressure:F1} hPa\n" +
-            $"Hum: {data.humidity:F1}%\n" +
-            $"Gas: {data.gas_resistance:F2} Ω";
+            $"Godzina: {formattedTimestamp}\n" +
+            $"Tętno: {data.hr} bpm\n" +
+            $"Saturacja: {data.spo2} SpO₂%\n" +
+            $"Temp. ciała: {data.object_temp:F1} °C\n" +
+            $"Temp. otoczenia: {data.ambient_temp:F1} °C\n" +
+            $"Akcelerometr:\n" + 
+            $" x: {data.accel.x:F2} m/s², y: {data.accel.y:F2} m/s², z: {data.accel.z:F2} m/s²\n" +
+            $"Żyroskop: x: {data.gyro.x:F2} °/s, y: {data.gyro.y:F2} °/s, z: {data.gyro.z:F2} °/s\n" +
+            $"Natężenie światła: {data.lux:F2} lux\n" +
+            $"Temp. powietrza: {data.temperature:F1} °C\n" +
+            $"Ciśnienie powietrza: {data.pressure:F1} hPa\n" +
+            $"Wilgotność powietrza: {data.humidity:F1}%\n";
 
         latestJson = null;
     }
