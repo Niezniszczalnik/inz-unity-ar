@@ -11,7 +11,6 @@ public class Vector3Data
 }
 
 [System.Serializable]
-
 public class SensorData
 {
     public string timestamp;
@@ -84,3 +83,4 @@ public class DataReceiver : MonoBehaviour
         if (ws != null)
             ws.Close();
     }
+}
